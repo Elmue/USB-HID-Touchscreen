@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <title>USB HID Touchscreen Emulator</title>
+    <meta name="description" content="HID Touchscreen, USB Descriptor, Teensy, USB">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="MSThemeCompatible" content="Yes">
+    <meta http-equiv="Language" content="en">
+    <meta name="Author" content="ElmüSoft">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="index, follow"></head>
+    <style>
+    body          { font-family:Verdana; font-size:13px; background-color:#F9F8F1; }
+    h1            { font-size:25px; font-weight:bold; background-color:#007799; color:white; padding:8px 8px 8px 16px; margin-top:35px; border:solid 2px #77CCDD; border-radius: 10px; }
+    h2            { font-size:20px; font-weight:bold; background-color:#007799; color:white; padding:5px 3px 5px 8px; margin-top:10px; border:solid 1px #77CCDD; border-radius: 10px; }
+    h3            { font-size:17px; font-weight:bold; text-decoration:underline; color:#007799; margin-top:22px; margin-bottom:5px; }
+    h4            { font-size:13px; font-weight:bold; text-decoration:underline; color:#007799; margin-top:12px; margin-bottom:2px; }    
+    hr            { border: 3px solid #007799; border-radius: 5px; }
+    li            { padding-top:1px; padding-bottom:1px;}
+    code          { color:blue; }
+    a:hover       { color: #AA00FF; }
+    pre           { border:1px solid #AAAAAA; padding:2px; font-family:Courier New; font-size:12px; background-color:#FFFFDD; width:690px; }
+    .Pre          { border:1px solid #AAAAAA; padding:2px; font-family:Courier New; font-size:12px; background-color:white; }
+    .Link:hover   { color: #AA00FF; }
+    .Link, a      { color: blue; cursor:pointer; font-family:Verdana; font-size:12px; font-weight:bold; text-decoration:none; }
+    .DivFullSize  { position:absolute; visibility:hidden; background-color:#DDDDDD; padding:0px 10px 10px 10px; border:1px solid black; box-shadow: 5px 5px 5px #777; }
+    .Warning      { border:2px solid red; padding:5px; font-weight:bold; }
+    .Error        { color:red; font-weight:bold; }
+    .TblImage     { border:1px solid #CCCCCC; border-spacing: 0px; margin-top:15px; margin-bottom:15px; }
+    .TblImage td  { padding:0px; }
+    .TblImage th  { background-color:#777777; color:#FFFFFF; padding:1px 5px 2px 5px; font-weight:bold; }
+    .NoTopMargin  { margin-top:0px; }
+    .Highlight    { background-color:#FFFFAA; }
+    .Center       { text-align:center; }
+    .Right        { text-align:right; }
+    .Green        { color:green; }
+    .Red          { color:red; }
+    .Orange       { color:orange; }
+    .DarkRed      { color:#AA0000; }
+    .Blue         { color:blue; }
+    .Magenta      { color:magenta; }
+    .Gray         { color:#888888; }
+    .Time         { color:#775533; }
+    .Big          { font-size:15px; font-weight:bold; }
+    .Img          { border:1px solid #CCCCCC; }
+    .LineTop      { border-top:1px solid #CCCCCC; }
+    .LineBot      { border-bottom:1px solid #CCCCCC; }
+    .Translate    { background-color: #007799; border:2px solid #77CCDD; border-radius: 10px; }
+    .Translate td { color:white; padding:10px; }
+    .Assembler    { border:1px solid gray; padding:5px; }
+    .Assembler b  { color:blue; }
+    .Assembler code  { color:#DD8800; }
+    .Over         { text-decoration:overline; }
+    .OrangeSquare { background-color:#FFCC99; font-weight:bold; border-width:1px; border-style:solid; border-color:black; padding:1px; line-height:22px; }
+
+    .DataTable    { background-color:#333333; margin-top:10px; margin-bottom:10px; }
+    .DataTable th { background-color:#777777; color:#FFFFFF; padding:1px 5px 2px 5px; font-weight:bold; }
+    .DataTable tr { background-color:#F8F8F8; }
+    .DataTable td { background-color:#FFFFF8; padding:3px; }
+    .DataTable h3 { font-size:17px; font-weight:bold; text-decoration:underline; color:#007799; margin-top:8px; margin-bottom:0px; }
+
+    .PopupMenu { position:fixed; top:0px; right:0px; border:2px solid #77CCDD; z-index: 999; padding:5px; background-color:#007799; color:white; font-weight:bold; font-family:Arial,Helvetica,Sans-serif; font-size:13px; cursor:default; }
+    .MenuLink { color:white; text-decoration:none; }
+    .MenuLink:hover { color:#CCCCFF; }
+    </style>
+</head>
+<body>
+    
+<h1>A USB HID Keyboard, Mouse, Touchscreen Emulator</h1>
+
+<p>
+<div><b>This project shows how to use a Teensy processor to simulate keyboard, mouse and touch screen USB HID devices at the same time.</b></div>
+<div><b>This allows to remote-control a computer through one USB cable for automation purposes.</b></div>
+
+<div id="DivFullSize" class="DivFullSize" OnClick="ShowMenu(false)">
+    <table>
+        <tr><td class="Right"><span class="Link" onClick="HideFullSize()">Close</span></td></tr>
+        <tr><td><div id="DivScrollable"><img id="ImgFullSize" src=""></div></td></tr>
+    </table>
+</div>
+  <h3>Teensy Board</h3>
+  <p><img height="446px" src="Images/Teensy_3.1_board.png" class="Img" width="384px" /></p>
+  <p>The Teensy is a tiny PCB board (35 x 18 mm) with a lot of hardware functionality. 
+    It can be programmed with the same developer environment as an <a href="http://www.arduino.cc/en/Main/Products" target="_blank">Arduino</a> 
+    board. Among the features of the Teensy is the capability of the microprocessor 
+    to emulate USB devices.</p>
+  <h3>Programming</h3>
+  <p>To program the Teensy&#39;s processor you need a micro USB cable and you 
+    have to install:</p>
+  <ol>
+    <li>The Arduino compiler version 1.64. (<a href="http://www.arduino.cc/en/Main/OldSoftwareReleases#previous" target="_blank">Download</a>)</li>
+    <li>The TeensyDuino libraries (<a href="https://www.pjrc.com/teensy/td_download.html" target="_blank">Download</a>)<br />
+      Direct links to version 1.23: <a href="https://www.pjrc.com/teensy/td_123/teensyduino.dmg">MAC</a>, 
+      <a href="https://www.pjrc.com/teensy/td_123/teensyduino.32bit">Linux 32 
+      bit</a>, <a href="https://www.pjrc.com/teensy/td_123/teensyduino.64bit">Linux 
+      64 bit</a>, <a href="https://www.pjrc.com/teensy/td_123/teensyduino.exe">Windows</a></li>
+  </ol>
+  <p>The source code has to be written in C and the firmware that you write for 
+    the board is named a &quot;<i>Sketch</i>&quot;.</p>
+  <p>You have to configure the compiler like in this screenshot:</p>
+  <p><img height="301px" src="Images/Compiler_Config.gif" width="621px" /></p>
+  <p>You can also use the option &quot;<b>Serial + Keyboard + Mouse + Joystick</b>&quot; 
+    which will add an USB virtual COM port to the keyboard, mouse and joystick 
+    devices.<br />
+    &nbsp;</p>
+  <h3>Problems with version TeensyDuino 1.23</h3>
+  <p>When you have installed and configured the compiler you can already start 
+    writing code that emulates keyboard, mouse and joystick. You will find several 
+    example projects already installed on your harddisk (see menu &quot;File&quot; 
+    -&gt; &quot;Examples&quot;).</p>
+  <p>But there is a severe problem with the original code from TeensyDuino 1.23:</p>
+  <p>The mouse emulation does not work on Linux.<br />
+    The cause is a severe design error in the Linux X11 server which is full of 
+    bugs and misdesigns.</p>
+  <p>The X11 server does not accept a USB mouse device that sends absolute coordinates.<br />
+    But if you want to position the mouse at an exact location on the screen, 
+    the mouse positioning with relative coordinates is useless for several reasons:</p>
+  <ol>
+    <li>As you don&#39;t know the current location of the mouse pointer on the 
+      computer that is connected to the Teensy you would have to first move the 
+      mouse to the top left corner of the screen and start a relative movement 
+      from there, which is ugly.</li>
+    <li>When the Teensy USB device tells the remote computer that the mouse has 
+      moved by 100 units it depends on the settings in control panel and on the 
+      operating system, how much the mouse really moves on the screen. It may 
+      move 53 pixels or 144 pixels!</li>
+    <li>When &quot;Mouse Enhancement&quot; is enabled in control panel it becomes 
+      even worse: The distance of movement will depend additionally on the movement 
+      speed.</li>
+    <li>Relative movement works on Linux only correctly in steps of 1 due to bugs/misdesigns 
+      in X11.</li>
+    <li>Summary: If you want to position the mouse pointer exactly with relative 
+      movement: FORGET IT !</li>
+  </ol>
+  <p>For that reason PJRC has implemented absolute mouse positioning in the versions 
+    TeensyDuino <b>1.17</b> and <b>1.18</b>. This works better but then some users 
+    complained that they now cannot move the mouse anymore relatively which they 
+    needed for their projects.</p>
+  <p>So in the TeensyDuino versions <b>1.19</b> to <b>1.23</b> PJRC implemented 
+    a USB device that allows relative <b>and</b> absolute movement in the same 
+    HID device. But Linux does not accept this HID device and the mouse does not 
+    move with absolute coordinates anymore.</p>
+  <p><b>SUMMARY: </b><br />
+    Whatever version of TeensyDuino you use, you will never have a code that satisfies 
+    the needs of all users and all operating systems.</p>
+  <h3>My changes</h3>
+  <p>And here comes my project. The code that you can download above in the ZIP 
+    file is a modification of the Teensyduino 1.23 code. Copy the 5 files in the 
+    ZIP to the folder <nobr>ArduinoCompiler/hardware/teensy/avr/cores/teensy3</nobr><br />
+    I made the following changes to the original code:</p>
+  <ol>
+    <li>The <b>mouse device</b> uses ONLY relative coordinates which will work 
+      on all operating systems (just like a &quot;normal&quot; real mouse).</li>
+    <li>I added a new <b>touch screen device</b> for absolute pointer movement 
+      that also works on all operating systems.</li>
+    <li>I did <b>not</b> change the commands of the Mouse class that you already 
+      are using in your current sketches, so you simply replace the files in the 
+      ZIP file above and recompile your sketch without changes.</li>
+    <li>I completely rewrote the <b>Mouse class</b>, cleand up the code and added 
+      more functionality.</li>
+    <li>I added lots of <b>comments</b> to the code that was sparsely commented 
+      before.</li>
+    <li>I have commented out the <b>joystick </b>device which I don&#39;t need. 
+      If you need it, read my comments in <b>usb_desc.h</b> how to enable it again.</li>
+    <li>I removed the <b>SerialEmu</b> device which I don&#39;t need. If you should 
+      need it, you have to change only a very few lines in <b>usb_desc.h</b>.</li>
+  </ol>
+  <p>I hope that PJRC will integrate my code into future versions of TeensyDuino 
+    (from 1.24 on, which is not yet released).</p>
+  <p>For the case that PJRC does not implement my code, you find also the original 
+    code from 1.23 in the ZIP file. So you can compare what I have changed and 
+    you can also compare the orginal 1.23 code with any future version to see 
+    what PJRC has changed. (I recommend <a href="http://www.araxis.com/merge/index.en" target="_blank">Araxis 
+    Merge</a> to compare text files)</p>
+  <p>After applying my changes and connecting the programmed Teensy to a Windows 
+    computer you will see in control panel 3 new USB devices:</p>
+  <p><img height="360px" src="Images/USB_devices.gif" class="Img" width="308px" /></p>
+  <h3>USB device descriptors</h3>
+  <p>To create a new HID device in Teensy I had first to learn a lot about USB 
+    descriptors. There is no really well written manual about this complex stuff 
+    in internet. If you read the documents from <a href="http://www.usb.org/developers" target="_blank">USB.org</a> 
+    you will get shocked about the horrible writing quality. You will probably 
+    not understand anything.</p>
+  <p>You find some more user friendly tutorials at <a href="http://www.beyondlogic.org/usbnutshell/usb5.shtml" target="_blank">Beyondlogic</a> 
+    and <a href="http://eleccelerator.com/tutorial-about-usb-hid-report-descriptors" target="_blank">Eleccelerator</a> 
+    but even these stay cryptic for a beginner.</p>
+  <p>A VERY great help for Windows users is the program <a href="http://www.usblyzer.com/" target="_blank">USBlyzer</a> 
+    which exists as a 33 day trial version with full functionality. This <b>USB 
+    Sniffer</b> shows all device descriptos of all connected USB devices and the 
+    data packets sent through the USB cable(s).</p>
+  <p>To be sure that what I do is correct I copied the device descriptors of a 
+    real <b>Genius</b> optical mouse and a real touch screen: <b>ELO</b> TouchSystems 
+    CarrollTouch 4500U. The keyboard device stays unchanged.</p>
+  <p>Here are the HID device descriptors that I finally implemented:</p>
+  <table border="0" cellpadding="5" cellspacing="0">
+    <tbody> 
+    <tr> 
+      <td  valign="top"> 
+        <table cellpadding="0" cellspacing="0" class="DataTable" style="border:1px solid #AAAAAA">
+          <tbody> 
+          <tr> 
+            <th>Mouse</th>
+          </tr>
+          <tr> 
+            <td>Usage Page (Generic Desktop)</td>
+          </tr>
+          <tr> 
+            <td>Usage (Mouse)</td>
+          </tr>
+          <tr> 
+            <td>Collection (Application)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage Page (Button)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage Minimum (Button 1)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage Maximum (Button 3)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Logical Minimum (0)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Logical Maximum (1)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Report Count (3)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Report Size (1)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> (Data,Var,Abs,NWrp,Lin,Pref,NNul,Bit)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Report Count (1)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Report Size (5)</td>
+          </tr>
+          <tr> 
+            <td nowrap>&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> (Cnst,Var,Abs,NWrp,Lin,Pref,NNul,Bit)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage Page (Generic Desktop)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage (Pointer)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Collection (Physical)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (X)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (Y)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical Minimum 
+              (<font color="#FF0000">-32767</font>)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical Maximum 
+              (<font color="#FF0000">32767</font>)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report Size (16)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report Count (2)</td>
+          </tr>
+          <tr> 
+            <td nowrap>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> 
+              (Data,Var,<font color="#FF0000">Rel</font>,NWrp,Lin,Pref,NNul,Bit)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;End Collection</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage (Wheel)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Logical Minimum (-127)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Logical Maximum (127)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Report Size (8)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Report Count (1)</td>
+          </tr>
+          <tr> 
+            <td nowrap>&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> (Data,Var,Rel,NWrp,Lin,Pref,NNul,Bit)</td>
+          </tr>
+          <tr> 
+            <td>End Collection</td>
+          </tr>
+          </tbody> 
+        </table>
+      </td>
+      <td  valign="top"> 
+        <table cellpadding="0" cellspacing="0" class="DataTable" style="border:1px solid #AAAAAA">
+          <tbody> 
+          <tr> 
+            <th>Touchscreen (version &#39;Pointer&#39;)</th>
+          </tr>
+          <tr> 
+            <td>Usage Page (Generic Desktop)</td>
+          </tr>
+          <tr> 
+            <td>Usage (Pointer)</td>
+          </tr>
+          <tr> 
+            <td>Collection (Application)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage Page (Generic Desktop)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage (Pointer)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;Collection (Physical)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage Page (Button)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage Minimum 
+              (Button 1)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage Maximum 
+              (Button 1)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical Minimum 
+              (0)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical Maximum 
+              (1)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Physical Minimum 
+              (0)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Physical Maximum 
+              (1)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Unit (None)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report Size (1)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report Count (1)</td>
+          </tr>
+          <tr> 
+            <td nowrap>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> 
+              (Data,Var,Abs,NWrp,Lin,NPrf,Null,Bit)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report Size (1)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report Count (7)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> (Cnst,Ary,Abs)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage Page (Generic 
+              Desktop)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (X)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (Y)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical Minimum 
+              (0)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical Maximum 
+              (<font color="#FF0000">10000</font>)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Physical Minimum 
+              (0)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Physical Maximum 
+              (<font color="#FF0000">10000</font>)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Unit (None)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report Size (16)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report Count (2)</td>
+          </tr>
+          <tr> 
+            <td nowrap>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> 
+              (Data,Var,<font color="#FF0000">Abs</font>,NWrp,Lin,NPrf,Null,Bit)</td>
+          </tr>
+          <tr> 
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;End Collection</td>
+          </tr>
+          <tr> 
+            <td>End Collection</td>
+          </tr>
+          </tbody> 
+        </table>
+      </td>
+    </tr>
+    </tbody> 
+  </table>
+  <p>As you see the <b>mouse </b>now allows <b>relative</b> movement of 16 bit 
+    (-32767 to 32767) rather than 8 bit (-127 to 127) in the original code which 
+    was far too few.</p>
+  <p>The <b>touch screen</b> uses coordinates from 0 to 10000 which allows to 
+    pass values in <b>percent</b> of the screen width/height with a precision 
+    of two digits after the decimal point. So to position the mouse at the bottom 
+    right corner of the screen the Mouse class sends the values 100.00% for X 
+    and Y which corresponds to a value of 10000 beeing sent through the USB cable. 
+    To position the mouse in the center of the screen the Mouse class sends 5000, 
+    5000.</p>
+  <p>Note that it is completely <b>irrelevant</b> how many pixels the real monitor 
+    resolution is. This works on ANY monitor size because the operating system 
+    that receives the touch screen coordinates converts them into screen coordinates 
+    in pixels. All touch screens work like this.</p>
+  <p>I tested my project on Windows XP, 7, 8, 10 and on Linux (Suse, Ubuntu, Knoppix) 
+    where it works seamlessly.</p>
+  <h3>First alternate Touchscreen Descriptor</h3>
+  <p>Update february 2016:<br />
+    Some people reported here on Codeproject that the above touchscreen descriptor 
+    does not work on OSX and Android. So I created an alternate descriptor that 
+    you must enable in the file <code>usb_desc.h</code> by changing a zero into 
+    a one in this line:</p>
+  <pre>
+#define TOUCH_DEVICE   1</pre>
+  <p>This will replace the above descriptor with this one:</p>
+  <table cellpadding="0" cellspacing="0" class="DataTable" style="border:1px solid #AAAAAA">
+    <tbody> 
+    <tr> 
+      <th>Touchscreen (version &#39;Single Touch&#39;)</th>
+    </tr>
+    <tr> 
+      <td>Usage Page (Digitizer)</td>
+    </tr>
+    <tr> 
+      <td>Usage (Pen)</td>
+    </tr>
+    <tr> 
+      <td>Collection (Application)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage (Stylus)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;Collection (Physical)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (Tip 
+        Switch)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (In 
+        Range)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical 
+        Minimum (0)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical 
+        Maximum (1)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Size (1)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Count (2)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> 
+        (Data,Var,Abs,NWrp,Lin,Pref,NNul,Bit)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Size (1)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Count (6)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> 
+        (Cnst,Ary,Abs)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage Page 
+        (Generic Desktop)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (Pointer)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Collection 
+        (Physical)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage 
+        (X)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage 
+        (Y)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical 
+        Minimum (0)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical 
+        Maximum (10000)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        Physical Minimum (0)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        Physical Maximum (10000)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        Unit (None)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Size (16)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Count (2)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> 
+        (Data,Var,Abs,NWrp,Lin,Pref,NNull,Bit)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;End Collection</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;End Collection</td>
+    </tr>
+    <tr> 
+      <td>End Collection</td>
+    </tr>
+    </tbody> 
+  </table>
+  <p>I tested this descriptor successfully on Windows XP, 7, 8, 10 and on Ubuntu 
+    and Knoppix.<br />
+    <br />
+    <strong>Please report results on OSX and Android!</strong><br />
+    &nbsp;</p>
+  <h3>Second alternate Touchscreen Descriptor</h3>
+  <p>You can enable the third touchscreen descriptor in the file <code>usb_desc.h</code> 
+    with:</p>
+  <pre>
+#define TOUCH_DEVICE 2</pre>
+  <p>This descriptor is a multi-touch descriptor, but it uses only one finger.</p>
+  <table cellpadding="0" cellspacing="0" class="DataTable" style="border:1px solid #AAAAAA">
+    <tbody> 
+    <tr> 
+      <th>Touchscreen (version &#39;Multi Touch&#39;)</th>
+    </tr>
+    <tr> 
+      <td>Usage Page (Digitizer)</td>
+    </tr>
+    <tr> 
+      <td>Usage (Touch Screen)</td>
+    </tr>
+    <tr> 
+      <td>Collection (Application)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage (Contact Count Maximum)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;Logical Maximum (1)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;<b>Feature</b> (Data,Var,Abs,NWrp,Lin,Pref,NNul,NVol,Bit)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage (Contact Count)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;Report Count (1)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;Report Size (8)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> (Data,Var,Abs,NWrp,Lin,Pref,NNul,Bit)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;Usage (Finger)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;Collection (Logical)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (Contact 
+        Identifier)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Size (8)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Count (1)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> 
+        (Data,Var,Abs,NWrp,Lin,Pref,NNul,Bit)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (Tip 
+        Switch)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (In 
+        Range)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical 
+        Minimum (0)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical 
+        Maximum (1)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Size (1)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Count (2)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> 
+        (Data,Var,Abs,NWrp,Lin,Pref,NNul,Bit)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Count (6)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> 
+        (Cnst,Var,Abs,NWrp,Lin,Pref,NNul,Bit)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage Page 
+        (Generic Desktop)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (X)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Usage (Y)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical 
+        Minimum (0)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logical 
+        Maximum (10000)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Physical 
+        Minimum (0)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Physical 
+        Maximum (10000)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Unit (None)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Size (16)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Report 
+        Count (2)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Input</b> 
+        (Data,Var,Abs,NWrp,Lin,Pref,NNul,Bit)</td>
+    </tr>
+    <tr> 
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;End Collection</td>
+    </tr>
+    <tr> 
+      <td>End Collection</td>
+    </tr>
+    </tbody> 
+  </table>
+  <p><strong><font color="red">ATTENTION:</font></strong><br />
+    This descriptor <strong>behaves very different</strong> from the previous 
+    two descriptors.<br />
+    When you call <code>Mouse.moveTo()</code> the mouse pointer will NOT move 
+    on the screen. When you click with the simulated finger, the mouse pointer 
+    jumps to the new location and it may even disappear (Linux and Windows). The 
+    reason is that on a real touch screen you do not need the mouse pointer because 
+    you see where you are touching, so the operating system hides the mouse pointer.</p>
+  <p>This descriptor works immediately on Windows XP, 8, 10 and Ubuntu and Knoppix.<br />
+    But nothing will happen on <strong>Windows 7</strong> if you do not enable 
+    it first. Go to Control Panel -&gt; Pen and Touch:</p>
+  <p><img alt="" src="Images/TouchOptionsWin7.png" /></p>
+  <p>After the first installation (Windows says: &quot;The device is ready now&quot;) 
+    it may be necessary to disconnect and reconnect the Teensy once to make it 
+    work.</p>
+  <p>Try which of the three touchscreen descriptors works for you by setting <code>TOUCH_DEVICE</code> 
+    to 0, 1 or 2.</p>
+  <h3>Programming Mouse/Touchscreen Movement</h3>
+  <p>The commands in your sketches can stay unchanged, but you get extended functionality:</p>
+  <p>Move the mouse pointer with<font color="#FF0000"> relative</font> coordinates 
+    (-32767 to 32767) via <b><font color="#FF0000">mouse</font> device</b>:</p>
+  <pre>
+Mouse.move(x, y);</pre>
+  <p>Move the mouse pointer with <font color="#FF0000">absolute</font> coordinates 
+    in percent (0 to 10000) via <b><font color="#FF0000">touchscreen</font> device</b>:</p>
+  <pre>
+Mouse.moveTo(x, y);
+
+Example:
+Mouse.moveTo(5000, 5000);
+moves the mouse to the center of the screen (50.00%)
+
+Mouse.moveTo(10000, 10000);
+moves the mouse to the bottom/right corner of the screen (100.00%)</pre>
+  <p>Move the mouse pointer with <font color="#FF0000">absolute </font>coordinates 
+    in pixels on a screen of 1024 x 768 pixels resolution via <b><font color="#FF0000">touchscreen</font> 
+    device</b>:</p>
+  <pre>
+Mouse.screenSize(1024, 768);
+Mouse.moveTo(x, y);
+
+Example:
+Mouse.moveTo(1024/2, 768/2);
+moves the mouse to the center of the screen
+
+Mouse.moveTo(1024, 768);
+moves the mouse to the bottom/right corner of the screen</pre>
+  <p>As you see:<br />
+    After calling <code>Mouse.screenSize()</code> the coordinates automatically 
+    change from percent to pixel.<br />
+    You have to call <code>Mouse.screenSize()</code> only once (or never).</p>
+  <h3>Doing a drag operation with the touchscreen device</h3>
+  <pre>Mouse.moveTo(startX, startY);<br>delay(10);<br>Mouse.set_buttons(0, 0, 0, 1); // finger down<br>delay(10);<br>Mouse.moveTo(endX, endY);<br>delay(10);<br>Mouse.set_buttons(0, 0, 0, 0); // finger up</pre>
+  <p>This will result in a jumping drag operation rather than a slow drag operation. 
+    <br>
+    To get a more realistic simulation you should write a loop which sends the 
+    coordinates in smaller steps. <br>
+    For example to move from coordinate 0,0 to 100,100: 
+  <pre>Mouse.moveTo(10,10); <br>delay(5);<br>Mouse.moveTo(20,20); <br>delay(5);<br>Mouse.moveTo(30,30); <br>delay(5);<br>Mouse.moveTo(40,40);<br>etc.. </pre>
+  <h3>Special Case: Apple Macintosh</h3>
+  <p>The previous code of PJRC had a workaround for Apple Macintosh which puts 
+    a fix margin of 7.5% around the usable area of the mouse movement resulting 
+    in 85% of the screen area. See this <a href="http://lists.apple.com/archives/usb/2011/Jun/msg00032.html" target="_blank">posting</a>.</p>
+  <p>I don&#39;t know if a touchscreen on MAC also needs this mouse workaround 
+    because I don&#39;t have a MAC to test it.<br />
+    For the case that it should be required, I implemented four optional parameters 
+    for <code>Mouse.screenSize()</code> that allow to define this margin, but 
+    in a more flexible way than the original (very cryptic) PJRC code:</p>
+  <pre>
+Mouse.screenSize(widthPixel, heightPixel, // in pixel
+                 marginLeft, marginTop, marginRight, marginBottom); // in percent
+
+Example for MAC:
+Mouse.screenSize(1024, 768, 750, 750, 9250, 9250);</pre>
+  <p>This line defines a screen size of 1024 x 768 pixels and a margin of 7.50% 
+    around the usable area. <nobr>(100.00% - 7.50% = 92.50%)</nobr>.</p>
+  <p><strong>This information is based on PJRC.<br />
+    Can a MAC user please confirm that this workaround is really required?</strong></p>
+  <h3>Clicking</h3>
+  <p>Due to the fact that there is now a mouse device that has 3 mouse buttons 
+    (left, middle, right) and a touch screen that has only one &quot;<i>button</i>&quot; 
+    which is the finger of the user, I added the option to click either with the 
+    mouse device or the touch screen device:</p>
+  <pre>
+Mouse.click(button);
+
+Or you can also use
+Mouse.press(button); 
+and 
+Mouse.release(button); 
+
+where button may be MOUSE_LEFT, MOUSE_MIDDLE, MOUSE_RIGHT or TOUCH_FINGER
+</pre>
+  <p>If you want to to hold a button down (for example for a drag and drop operation):</p>
+  <pre>
+Mouse.set_buttons(1, 0, 0, 0); // left mouse button down
+Mouse.set_buttons(0, 1, 0, 0); // middle mouse button down
+Mouse.set_buttons(0, 0, 1, 0); // right mouse button down
+Mouse.set_buttons(0, 0, 0, 1); // finger touching
+Mouse.set_buttons(0, 0, 0, 0); // release all buttons and the finger</pre>
+  <h3>Mouse Scrolling</h3>
+  <p>And finally you can use the mouse wheel (-127 to 127) via <b>mouse device</b>:</p>
+  <pre>
+Mouse.scroll(movement);</pre>
+  <p>Please read the plenty comments that I have put in <b>usb_mouse.h</b>.</p>
+
+
+<h1>Download</h1>
+
+<form action="https://netcult.ch/elmue/Download.php" method="get" target="_blank">
+<input type="hidden" name="Program" value="HID-Touchscreen">
+<input type="hidden" name="Action"  value="Download">
+<table cellspacing=0 cellpadding=0><tr>
+	<td><b>Click here to&nbsp;</b></td>
+    <td><input type="submit" value="Download"></td>
+    <td><b>&nbsp;the latest version</b></td>
+</tr></table>
+</form>
+
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+
+</body>
+</html>
+
